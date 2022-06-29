@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 
 class TodoSerializer(ModelSerializer):
+    user = serializers.CharField(read_only=True)
     id = serializers.CharField(read_only=True)
 
     class Meta:
@@ -15,6 +16,10 @@ class TodoSerializer(ModelSerializer):
             "user",
             "status"
         ]
+
+    def create(self, validated_data):
+        user = self.context.get("user")
+        return Todos.objects.create(**validated_data, user=user)  # overrides default create ORM query
 
 
 class UserSerializer(ModelSerializer):

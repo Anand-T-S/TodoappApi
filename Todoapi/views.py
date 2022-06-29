@@ -4,6 +4,7 @@ from Todoapi.models import Todos
 from rest_framework.response import Response
 from Todoapi.serializers import TodoSerializer, UserSerializer, LoginSerializer
 from django.contrib.auth import authenticate, login
+from rest_framework import authentication, permissions
 from rest_framework import status
 
 
@@ -34,19 +35,23 @@ class SigninView(APIView):
                 return Response({"msg": "invalid credentials"})
 
 
-
-
 class TodosView(APIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request, *args, **kwargs):
-        qs = Todos.objects.all()
+        qs = Todos.objects.filter(user=request.user)
         serializer = TodoSerializer(qs, many=True)
         return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):
-        serializer = TodoSerializer(data=request.data)
+        serializer = TodoSerializer(data=request.data, context={"user": request.user})  # pass user as context
+        # print(request.user)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
 
 
 class TodoDetailView(APIView):
