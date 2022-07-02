@@ -17,9 +17,9 @@ class TodoSerializer(ModelSerializer):
             "status"
         ]
 
-    def create(self, validated_data):
-        user = self.context.get("user")
-        return Todos.objects.create(**validated_data, user=user)  # overrides default create ORM query
+    # def create(self, validated_data):
+    #     user = self.context.get("user")
+    #     return Todos.objects.create(**validated_data, user=user)  # overrides default create ORM query
 
 
 class UserSerializer(ModelSerializer):
