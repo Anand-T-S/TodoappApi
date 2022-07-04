@@ -5,7 +5,9 @@ from rest_framework.response import Response
 from Todoapi.serializers import TodoSerializer, UserSerializer, LoginSerializer
 from django.contrib.auth import authenticate, login
 from rest_framework import authentication, permissions
-from rest_framework import status
+from rest_framework import status, serializers
+
+from rest_framework.viewsets import ViewSet, ModelViewSet
 
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
@@ -118,5 +120,79 @@ class TodoMixinDetailsView(GenericAPIView,
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
 
+    def perform_destroy(self, instance):
+        if instance.user == self.request.user:
+            instance.delete()
+        else:
+            raise serializers.ValidationError("not own user")
+
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
+
+# View Set
+
+class TodosViewSetView(ViewSet):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        qs = Todos.objects.filter(user=request.user)
+        serializer = TodoSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = TodoSerializer(data=request.data, context={"user": request.user})  # pass user as context
+        # print(request.user)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+    def retrieve(self, request, *args, **kwargs):
+        id = kwargs.get("pk")
+        todo = Todos.objects.get(id=id)
+        serializer = TodoSerializer(todo)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        print(kwargs)
+
+        id = kwargs.get("pk")
+        todo = Todos.objects.get(id=id)
+        serializer = TodoSerializer(instance=todo, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        id = kwargs.get("pk")
+        todo = Todos.objects.get(id=id)
+        todo.delete()
+        return Response({"msg": "deleted"})
+
+# Model View Set
+
+
+class TodosModelViewSetView(ModelViewSet):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    model = Todos
+    serializer_class = TodoSerializer
+    queryset = Todos.objects.all()
+
+    def get_queryset(self):
+        return Todos.objects.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = TodoSerializer(data=request.data, context={"user": request.user})  # pass user as context
+        # print(request.user)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+
+

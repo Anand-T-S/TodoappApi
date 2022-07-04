@@ -1,6 +1,10 @@
 from django.urls import path
 from Todoapi import views
+from rest_framework.routers import DefaultRouter
 
+router = DefaultRouter()
+router.register("todosviewset", views.TodosViewSetView, basename="todosviewset")
+router.register("todosmodelviewset",views.TodosModelViewSetView, basename="todosmodelviewset")
 
 urlpatterns = [
     path("todos", views.TodosView.as_view()),
@@ -10,4 +14,4 @@ urlpatterns = [
     path("todosmixin", views.TodosMixinView.as_view()),
     path("todosmixin/details/<int:todo_id>", views.TodoMixinDetailsView.as_view()),
 
-]
+]+router.urls
