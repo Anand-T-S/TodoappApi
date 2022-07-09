@@ -176,7 +176,7 @@ class TodosViewSetView(ViewSet):
 
 
 class TodosModelViewSetView(ModelViewSet):
-    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    # authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     model = Todos
     serializer_class = TodoSerializer
